@@ -57,8 +57,8 @@ public class RingBufferTest {
     public void shouldNotLostAnyUpdate() throws InterruptedException {
         int numberOfWriters = 400;
         int numberOfReaders = 400;
-        int numberOfReadsPerReader = 15;
-        int numberOfWritesPerWriter = 10;
+        int numberOfReadsPerReader = 150;
+        int numberOfWritesPerWriter = 100;
         Thread[] writers = new Thread[numberOfWriters];
         Thread[] readers = new Thread[numberOfReaders];
         for(int i = 0; i < numberOfWriters; i++){
