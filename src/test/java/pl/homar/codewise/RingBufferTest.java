@@ -34,18 +34,14 @@ public class RingBufferTest {
         final int numberOfWriters = 20;
         final int numberOfWritesPerReader = 5;
         Thread[] writers = new Thread[numberOfWriters];
-        for(int i = 0; i < numberOfWriters; i++){
-            writers[i] = new Writer(ringBuffer, numberOfWritesPerReader, i);
-        }
-        for(int i = 0; i < numberOfWriters; i++){
-            writers[i].start();
-        }
-        for(int i = 0; i < numberOfWriters; i++){
-            writers[i].join();
-        }
+        initializeWriters(numberOfWriters, numberOfWritesPerReader, writers);
+
+        startThreads(numberOfWriters, writers);
+        joinThreads(numberOfWriters, writers);
         CountingReader countingReader = new CountingReader(ringBuffer);
         countingReader.start();
         countingReader.join();
+
         InternalMessage[] internalMessages = countingReader.result;
         assertEquals(numberOfWriters, stream(internalMessages).filter(m -> m.getTimestamp() == numberOfWritesPerReader-1).count());
         assertEquals(numberOfWritesPerReader, stream(internalMessages).filter(m -> m.getUserAgent().equals("userAgent2")).count());
@@ -55,32 +51,46 @@ public class RingBufferTest {
 
     @Test
     public void shouldNotLostAnyUpdate() throws InterruptedException {
-        int numberOfWriters = 400;
-        int numberOfReaders = 400;
+        int numberOfWriters = 40;
+        int numberOfReaders = 10;
         int numberOfReadsPerReader = 150;
         int numberOfWritesPerWriter = 100;
         Thread[] writers = new Thread[numberOfWriters];
         Thread[] readers = new Thread[numberOfReaders];
-        for(int i = 0; i < numberOfWriters; i++){
-            writers[i] = new Writer(ringBuffer, numberOfWritesPerWriter, i);
-        }
-        for(int i = 0; i < numberOfReaders; i++){
-            readers[i] = new Reader(ringBuffer, numberOfReadsPerReader);
-        }
-        for(int i = 0; i < numberOfWriters; i++){
-            writers[i].start();
-        }
-        for(int i = 0; i < numberOfReaders; i++){
-            readers[i].start();
-        }
+        initializeWriters(numberOfWriters, numberOfWritesPerWriter, writers);
+        imitializeReaders(numberOfReaders, numberOfReadsPerReader, readers);
+
+        startThreads(numberOfWriters, writers);
+        startThreads(numberOfReaders, readers);
+        joinThreads(numberOfWriters, writers);
+        joinThreads(numberOfReaders, readers);
+
+        assertEquals(0, Arrays.stream(ringBuffer.read()).filter(im -> im.getTimestamp() < 0).count());
+        assertEquals(numberOfWritesPerWriter*numberOfWriters, ringBuffer.getPosition());
+    }
+
+    private void joinThreads(int numberOfWriters, Thread[] writers) throws InterruptedException {
         for(int i = 0; i < numberOfWriters; i++){
             writers[i].join();
         }
-        for(int i = 0; i < numberOfReaders; i++){
-            readers[i].join();
+    }
+
+    private void startThreads(int numberOfWriters, Thread[] threads) {
+        for(int i = 0; i < numberOfWriters; i++){
+            threads[i].start();
         }
-        assertEquals(0, Arrays.stream(ringBuffer.read()).filter(im -> im.getTimestamp() < 0).count());
-        assertEquals(numberOfWritesPerWriter*numberOfWriters, ringBuffer.getPosition());
+    }
+
+    private void imitializeReaders(int numberOfReaders, int numberOfReadsPerReader, Thread[] readers) {
+        for(int i = 0; i < numberOfReaders; i++){
+            readers[i] = new Reader(ringBuffer, numberOfReadsPerReader);
+        }
+    }
+
+    private void initializeWriters(int numberOfWriters, int numberOfWritesPerWriter, Thread[] writers) {
+        for(int i = 0; i < numberOfWriters; i++){
+            writers[i] = new Writer(ringBuffer, numberOfWritesPerWriter, i);
+        }
     }
 }
 
