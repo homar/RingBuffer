@@ -2,7 +2,6 @@ package pl.homar.codewise;
 
 import pl.homar.codewise.domain.InternalMessage;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.System.arraycopy;
@@ -12,22 +11,21 @@ class LockFreeRingBuffer implements RingBuffer {
     private final int size;
     private final InternalMessage[] items;
     private AtomicLong position;
-    private AtomicInteger cursor;
+    private AtomicLong cursor;
 
     LockFreeRingBuffer(int size) {
         this.size = size;
         this.items = new InternalMessage[size];
-        this.position = new AtomicLong(1);
-        this.cursor = new AtomicInteger(0);
+        this.position = new AtomicLong(0);
+        this.cursor = new AtomicLong(-1);
         fill();
     }
 
     public void put(InternalMessage e) {
         while (position.get() % size == cursor.get() - 1) ;
-        int pos = (int) position.getAndIncrement() % size;
-        items[pos] = e;
-        int prevPos = (pos == 0) ? size - 1 : pos - 1;
-        while (!cursor.compareAndSet(prevPos, pos)) ;
+        long pos = position.getAndIncrement();
+        items[(int) pos % size] = e;
+        while (!cursor.compareAndSet(pos - 1, pos)) ;
     }
 
     public InternalMessage[] read() {
@@ -37,7 +35,7 @@ class LockFreeRingBuffer implements RingBuffer {
     }
 
     public long getPosition() {
-        return position.get() - 1;
+        return position.get();
     }
 
     private void fill() {
@@ -48,3 +46,4 @@ class LockFreeRingBuffer implements RingBuffer {
 
 
 }
+
