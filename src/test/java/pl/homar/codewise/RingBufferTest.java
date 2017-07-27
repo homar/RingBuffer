@@ -23,7 +23,7 @@ public class RingBufferTest {
         return Arrays.asList(c1, c2);
     }
 
-    private RingBuffer ringBuffer;
+    private RingBuffer ringBuffer = new LockFreeRingBuffer(size);
 
     public RingBufferTest(Supplier<RingBuffer> ringBufferSupplier) {
         this.ringBuffer = ringBufferSupplier.get();
@@ -53,8 +53,8 @@ public class RingBufferTest {
     public void shouldNotLostAnyUpdate() throws InterruptedException {
         int numberOfWriters = 40;
         int numberOfReaders = 10;
-        int numberOfReadsPerReader = 150;
-        int numberOfWritesPerWriter = 100;
+        int numberOfReadsPerReader = 15;
+        int numberOfWritesPerWriter = 10;
         Thread[] writers = new Thread[numberOfWriters];
         Thread[] readers = new Thread[numberOfReaders];
         initializeWriters(numberOfWriters, numberOfWritesPerWriter, writers);
@@ -83,7 +83,7 @@ public class RingBufferTest {
 
     private void imitializeReaders(int numberOfReaders, int numberOfReadsPerReader, Thread[] readers) {
         for(int i = 0; i < numberOfReaders; i++){
-            readers[i] = new Reader(ringBuffer, numberOfReadsPerReader);
+            readers[i] = new Reader(ringBuffer, numberOfReadsPerReader, size);
         }
     }
 
@@ -118,17 +118,19 @@ class Writer extends Thread {
 class Reader extends Thread {
     private final RingBuffer ringBuffer;
     private final int number;
+    private final int size;
 
-    public Reader(RingBuffer ringBuffer, int number) {
+    public Reader(RingBuffer ringBuffer, int number, int size) {
         this.ringBuffer = ringBuffer;
         this.number = number;
+        this.size = size;
     }
 
     @Override
     public void run() {
         for(int i = 0; i < number; i++) {
             InternalMessage[] read = ringBuffer.read();
-            assert read.length == 100;
+            assert read.length == size;
         }
     }
 }

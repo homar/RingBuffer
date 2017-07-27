@@ -26,7 +26,7 @@ class LockFreeRingBuffer implements RingBuffer {
         long pos = position.getAndIncrement();
         while (pos >= cursor.get() + size) ;
         items.set((int) (pos % size), e);
-        while (!cursor.compareAndSet(pos - 1, pos)) ;
+        while (!cursor.compareAndSet(pos - 1, pos));
     }
 
     public InternalMessage[] read() {
