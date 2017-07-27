@@ -28,6 +28,7 @@ class RingBufferMessageCollector extends AbstractMessageCollector {
         long currentTimestamp = dateProvider.getTimestamp();
         InternalMessage[] internalMessages = ringBuffer.read();
         return stream(internalMessages)
+                .filter(this::isValid)
                 .filter(m -> !isTooOld(m, currentTimestamp))
                 .map(m -> m.toRawMessage())
                 .collect(toList());
@@ -38,8 +39,9 @@ class RingBufferMessageCollector extends AbstractMessageCollector {
         long currentTimestamp = dateProvider.getTimestamp();
         InternalMessage[] internalMessages = ringBuffer.read();
         return stream(internalMessages)
+                .filter(this::isValid)
                 .filter(m -> !isTooOld(m, currentTimestamp))
-                .filter(this::hasInvalidResponseCode)
+                .filter(this::hasErrorResponseCode)
                 .count();
     }
 }

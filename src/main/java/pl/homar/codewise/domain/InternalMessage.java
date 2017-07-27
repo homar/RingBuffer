@@ -2,7 +2,7 @@ package pl.homar.codewise.domain;
 
 public class InternalMessage {
 
-    public static final InternalMessage EMPTY = new InternalMessage("", -1, 0L);
+    public static final InternalMessage EMPTY = new InternalMessage("", -1, -1L);
     private final String userAgent;
     private final int responseCode;
     private final long timestamp;

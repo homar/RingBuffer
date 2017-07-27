@@ -55,13 +55,12 @@ public class RingBufferTest {
 
     @Test
     public void shouldNotLostAnyUpdate() throws InterruptedException {
-        int numberOfWriters = 100;
-        int numberOfReaders = 10;
+        int numberOfWriters = 400;
+        int numberOfReaders = 400;
         int numberOfReadsPerReader = 15;
         int numberOfWritesPerWriter = 10;
         Thread[] writers = new Thread[numberOfWriters];
         Thread[] readers = new Thread[numberOfReaders];
-        LockFreeRingBuffer ringBuffer = new LockFreeRingBuffer(size);
         for(int i = 0; i < numberOfWriters; i++){
             writers[i] = new Writer(ringBuffer, numberOfWritesPerWriter, i);
         }
@@ -80,6 +79,7 @@ public class RingBufferTest {
         for(int i = 0; i < numberOfReaders; i++){
             readers[i].join();
         }
+        assertEquals(0, Arrays.stream(ringBuffer.read()).filter(im -> im.getTimestamp() < 0).count());
         assertEquals(numberOfWritesPerWriter*numberOfWriters, ringBuffer.getPosition());
     }
 }

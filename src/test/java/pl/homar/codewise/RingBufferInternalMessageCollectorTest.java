@@ -19,6 +19,7 @@ public class RingBufferInternalMessageCollectorTest {
 
     private static final int size = 10;
     private static final long MINS_10 = 1000 * 60 * 10;
+    private static final long MINUNTE = 1000 * 60;
 
     @Parameterized.Parameters
     public static Collection<Supplier<RingBuffer>> ringBuffers() {
@@ -33,6 +34,15 @@ public class RingBufferInternalMessageCollectorTest {
     public RingBufferInternalMessageCollectorTest(Supplier<RingBuffer> ringBufferSupplier) {
         this.dateProvider = Mockito.mock(DateProvider.class);
         this.underTest = new RingBufferMessageCollector(ringBufferSupplier.get(), dateProvider);
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenThereWasNoWrites() {
+        when(dateProvider.getTimestamp()).thenReturn(MINUNTE);
+
+        List<Message> result = underTest.get100LastMessages();
+
+        assertEquals(0, result.size());
     }
 
     @Test
